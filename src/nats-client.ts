@@ -26,7 +26,7 @@ export class NatsManager {
     }
 
     async startSubscription(subject: string, outputChannel: vscode.OutputChannel, key: string): Promise<void> {
-        if (!this.nc) throw new Error('Не подключено');
+        if (!this.nc) throw new Error('Not connected');
         const sub = this.nc.subscribe(subject);
         const stop = () => {
             sub.unsubscribe();
@@ -48,8 +48,13 @@ export class NatsManager {
     }
 
     async sendRequest(subject: string, data: string): Promise<nats.Msg> {
-        if (!this.nc) throw new Error('Не подключено');
+        if (!this.nc) throw new Error('Not connected');
         return this.nc.request(subject, data);
+    }
+
+    async publish(subject: string, data: string): Promise<void> {
+        if (!this.nc) throw new Error('Not connected');
+        this.nc.publish(subject, data);
     }
 
     isSubscribed(key: string) {

@@ -1,40 +1,47 @@
 {
   "name": "nats-vscode",
-  "version": "1.0.0",
-  "description": "Vscode extenstion for nats",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "displayName": "nats-vscode",
+  "description": "Nats client from vscode",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.98.0"
   },
-  "keywords": [],
-  "author": "Klutrem",
-  "maintainers": [
-    "Bitswar"
+  "categories": [
+    "Other"
   ],
-  "license": "ISC",
-  "packageManager": "pnpm@10.7.0",
+  "activationEvents": [],
+  "main": "./dist/extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "nats.connect",
-        "title": "Подключиться к серверу NATS"
-      },
-      {
-        "command": "nats.disconnect",
-        "title": "Отключиться от сервера NATS"
-      }
-    ],
-    "languages": [
-      {
-        "id": "nats",
-        "extensions": [
-          ".nats"
-        ]
+        "command": "nats-vscode.helloWorld",
+        "title": "Hello World"
       }
     ]
   },
-  "dependencies": {
-    "nats": "^2.29.3",
-    "vscode": "^1.1.37"
+  "scripts": {
+    "vscode:prepublish": "pnpm run package",
+    "compile": "webpack",
+    "watch": "webpack --watch",
+    "package": "webpack --mode production --devtool hidden-source-map",
+    "compile-tests": "tsc -p . --outDir out",
+    "watch-tests": "tsc -p . -w --outDir out",
+    "pretest": "pnpm run compile-tests && pnpm run compile && pnpm run lint",
+    "lint": "eslint src",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.98.0",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "20.x",
+    "@typescript-eslint/eslint-plugin": "^8.28.0",
+    "@typescript-eslint/parser": "^8.28.0",
+    "eslint": "^9.23.0",
+    "typescript": "^5.8.2",
+    "ts-loader": "^9.5.2",
+    "webpack": "^5.98.0",
+    "webpack-cli": "^6.0.1",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.4.1"
   }
 }

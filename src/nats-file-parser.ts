@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
-
 export interface NatsAction {
-    type: 'subscribe' | 'request';
+    type: 'subscribe' | 'request' | 'publish'; 
     subject: string;
     data?: string;
     lineNumber: number;
@@ -28,6 +27,18 @@ export function parseNatsFile(document: vscode.TextDocument): NatsAction[] {
                     data = line.substring(dataStart, dataEnd + 1);
                 }
                 actions.push({ type: 'request', subject, data, lineNumber: i });
+            }
+        } else if (line.startsWith('PUBLISH')) {
+            const parts = line.split(' ', 2);
+            if (parts.length >= 2) {
+                const subject = parts[1];
+                const dataStart = line.indexOf('{');
+                const dataEnd = line.lastIndexOf('}');
+                let data: string | undefined;
+                if (dataStart !== -1 && dataEnd !== -1 && dataEnd > dataStart) {
+                    data = line.substring(dataStart, dataEnd + 1);
+                }
+                actions.push({ type: 'publish', subject, data, lineNumber: i });
             }
         }
     }
