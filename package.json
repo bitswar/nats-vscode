@@ -1,0 +1,40 @@
+{
+  "name": "nats-vscode",
+  "version": "1.0.0",
+  "description": "Vscode extenstion for nats",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Klutrem",
+  "maintainers": [
+    "Bitswar"
+  ],
+  "license": "ISC",
+  "packageManager": "pnpm@10.7.0",
+  "contributes": {
+    "commands": [
+      {
+        "command": "nats.connect",
+        "title": "Подключиться к серверу NATS"
+      },
+      {
+        "command": "nats.disconnect",
+        "title": "Отключиться от сервера NATS"
+      }
+    ],
+    "languages": [
+      {
+        "id": "nats",
+        "extensions": [
+          ".nats"
+        ]
+      }
+    ]
+  },
+  "dependencies": {
+    "nats": "^2.29.3",
+    "vscode": "^1.1.37"
+  }
+}
