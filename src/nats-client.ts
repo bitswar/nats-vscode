@@ -35,7 +35,7 @@ export class NatsManager {
         this.subscriptionMap.set(key, stop);
         (async () => {
             for await (const m of sub) {
-                outputChannel.appendLine(`Получено сообщение: ${m.data.toString()}`);
+                outputChannel.appendLine(`Recieved message: ${m.data.toString()}`);
             }
         })();
     }
@@ -58,6 +58,6 @@ export class NatsManager {
     }
 
     isSubscribed(key: string) {
-        return this.subscriptionMap.has(key)
+        return this.subscriptionMap.has(key);
     }
 }

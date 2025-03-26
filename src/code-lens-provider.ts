@@ -3,7 +3,7 @@ import { NatsManager } from './nats-client';
 import { parseNatsFile } from './nats-file-parser';
 
 export class NatsCodeLensProvider implements vscode.CodeLensProvider {
-    constructor(private natsManager: NatsManager) {}
+    constructor(private natsManager: NatsManager) { }
 
     provideCodeLenses(
         document: vscode.TextDocument,
@@ -17,14 +17,22 @@ export class NatsCodeLensProvider implements vscode.CodeLensProvider {
             if (action.type === 'subscribe') {
                 const key = `${document.fileName}_${action.lineNumber + 1}`;
                 const isSubscribed = this.natsManager.isSubscribed(key);
-                const title = isSubscribed ? 'Остановить подписку' : 'Запустить подписку';
+                const title = isSubscribed ? 'Unsubscribe' : 'Subscribe';
                 const command = isSubscribed ? 'nats.stopSubscription' : 'nats.startSubscription';
                 const args = [document.fileName, action.lineNumber + 1];
                 codeLenses.push(new vscode.CodeLens(range, { title, command, arguments: args }));
             } else if (action.type === 'request') {
                 const command: vscode.Command = {
-                    title: 'Отправить запрос',
+                    title: 'Send request',
                     command: 'nats.sendRequest',
+                    arguments: [document.fileName, action.lineNumber + 1]
+                };
+                codeLenses.push(new vscode.CodeLens(range, command));
+            }
+            else if (action.type === 'publish') {
+                const command: vscode.Command = {
+                    title: 'Publish',
+                    command: 'nats.publish',
                     arguments: [document.fileName, action.lineNumber + 1]
                 };
                 codeLenses.push(new vscode.CodeLens(range, command));
@@ -49,19 +57,19 @@ export class NatsCodeLensProvider implements vscode.CodeLensProvider {
             const key = `${document.fileName}_${lineNumber + 1}`;
             const isSubscribed = this.natsManager.isSubscribed(key);
             codeLens.command = {
-                title: isSubscribed ? 'Остановить подписку' : 'Запустить подписку',
+                title: isSubscribed ? 'Unsubscribe' : 'Subscribe',
                 command: isSubscribed ? 'nats.stopSubscription' : 'nats.startSubscription',
                 arguments: [document.fileName, lineNumber + 1]
             };
         } else if (line.startsWith('REQUESTER')) {
             codeLens.command = {
-                title: 'Отправить запрос',
+                title: 'send request',
                 command: 'nats.sendRequest',
                 arguments: [document.fileName, lineNumber + 1]
             };
         } else if (line.startsWith('PUBLISHE')) {
             codeLens.command = {
-                title: 'Опубликовать сообщение',
+                title: 'Publish',
                 command: 'nats.publish',
                 arguments: [document.fileName, lineNumber + 1]
             };

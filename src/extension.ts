@@ -3,7 +3,7 @@ import { NatsCodeLensProvider } from './code-lens-provider';
 import { NatsManager } from "./nats-client";
 
 const natsManager = new NatsManager();
-const outputChannel = vscode.window.createOutputChannel('NATS'); // Добавь канал вывода
+const outputChannel = vscode.window.createOutputChannel('NATS');
 
 export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(
@@ -20,29 +20,29 @@ export function activate(context: vscode.ExtensionContext) {
         }),
         vscode.commands.registerCommand('nats.startSubscription', async (filePath: string, lineNumber: number) => {
             if (!natsManager.isConnected()) {
-                vscode.window.showWarningMessage('Не подключено к серверу NATS.');
+                vscode.window.showWarningMessage('Not connected to nats server.');
                 return;
             }
             const document = await vscode.workspace.openTextDocument(filePath);
-            const line = document.getText().split('\n')[lineNumber].trim();
+            const line = document.getText().split('\n')[lineNumber - 1].trim();
             const parts = line.split(' ');
             const subject = parts[1];
             const key = `${filePath}:${lineNumber}`;
             await natsManager.startSubscription(subject, outputChannel, key);
-            vscode.window.showInformationMessage(`Подписка на ${subject} запущена`);
+            vscode.window.showInformationMessage(`Subscribed on subject ${subject} started`);
         }),
         vscode.commands.registerCommand('nats.stopSubscription', (filePath: string, lineNumber: number) => {
             const key = `${filePath}:${lineNumber}`;
             natsManager.stopSubscription(key);
-            vscode.window.showInformationMessage('Подписка остановлена');
+            vscode.window.showInformationMessage('Subscription stopped');
         }),
         vscode.commands.registerCommand('nats.sendRequest', async (filePath: string, lineNumber: number) => {
             if (!natsManager.isConnected()) {
-                vscode.window.showWarningMessage('Не подключено к серверу NATS.');
+                vscode.window.showWarningMessage('Not connected to nats server.');
                 return;
             }
             const document = await vscode.workspace.openTextDocument(filePath);
-            const line = document.getText().split('\n')[lineNumber].trim();
+            const line = document.getText().split('\n')[lineNumber - 1].trim();
             const parts = line.split(' ', 2);
             const subject = parts[1];
             const dataStart = line.indexOf('{');
@@ -52,16 +52,16 @@ export function activate(context: vscode.ExtensionContext) {
                 data = line.substring(dataStart, dataEnd + 1);
             }
             const response = await natsManager.sendRequest(subject, data);
-            outputChannel.appendLine(`Ответ на запрос ${subject}: ${response.data.toString()}`);
+            outputChannel.appendLine(`Reply to request from ${subject}: ${response.data.toString()}`);
         }),
-        // Новая команда для публикации
+
         vscode.commands.registerCommand('nats.publish', async (filePath: string, lineNumber: number) => {
             if (!natsManager.isConnected()) {
-                vscode.window.showWarningMessage('Не подключено к серверу NATS.');
+                vscode.window.showWarningMessage('Not connected to nats server.');
                 return;
             }
             const document = await vscode.workspace.openTextDocument(filePath);
-            const line = document.getText().split('\n')[lineNumber].trim();
+            const line = document.getText().split('\n')[lineNumber - 1].trim();
             const parts = line.split(' ', 2);
             const subject = parts[1];
             const dataStart = line.indexOf('{');
@@ -71,11 +71,10 @@ export function activate(context: vscode.ExtensionContext) {
                 data = line.substring(dataStart, dataEnd + 1);
             }
             await natsManager.publish(subject, data);
-            vscode.window.showInformationMessage(`Сообщение опубликовано на ${subject}`);
+            vscode.window.showInformationMessage(`Published to ${subject}`);
         })
     );
 
-    // Регистрация CodeLens провайдера
     context.subscriptions.push(
         vscode.languages.registerCodeLensProvider({ pattern: '**/*.nats' }, new NatsCodeLensProvider(natsManager))
     );

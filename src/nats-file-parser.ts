@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 export interface NatsAction {
-    type: 'subscribe' | 'request' | 'publish'; 
+    type: 'subscribe' | 'request' | 'publish';
     subject: string;
     data?: string;
     lineNumber: number;
