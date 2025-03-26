@@ -36,6 +36,7 @@ export class NatsManager {
         (async () => {
             for await (const m of sub) {
                 outputChannel.appendLine(`Recieved message: ${m.data.toString()}`);
+                outputChannel.show();
             }
         })();
     }
@@ -47,9 +48,13 @@ export class NatsManager {
         }
     }
 
-    async sendRequest(subject: string, data: string): Promise<nats.Msg> {
+    async sendRequest(subject: string, data: string): Promise<string> {
         if (!this.nc) throw new Error('Not connected');
-        return this.nc.request(subject, data);
+        return this.nc.request(subject, data).then((resp) => {
+            const respString = JSON.stringify(resp.json());
+            console.log(respString);
+            return respString;
+        });
     }
 
     async publish(subject: string, data: string): Promise<void> {

@@ -3,7 +3,18 @@ import { NatsCodeLensProvider } from './code-lens-provider';
 import { NatsManager } from "./nats-client";
 
 const natsManager = new NatsManager();
-const outputChannel = vscode.window.createOutputChannel('NATS');
+const globalOutputChannel = vscode.window.createOutputChannel('NATS');
+let subscriptionChannels = new Map<string, vscode.OutputChannel>();
+
+
+function getOutputChannelForSubject(subject: string): vscode.OutputChannel {
+    let channel = subscriptionChannels.get(subject);
+    if (!channel) {
+        channel = vscode.window.createOutputChannel(`NATS - ${subject}`);
+        subscriptionChannels.set(subject, channel);
+    }
+    return channel;
+}
 
 export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(
@@ -23,12 +34,14 @@ export function activate(context: vscode.ExtensionContext) {
                 vscode.window.showWarningMessage('Not connected to nats server.');
                 return;
             }
-            const document = await vscode.workspace.openTextDocument(filePath);
+            const document = await vscode.workspace.openTextDocument(vscode.Uri.file(filePath));
             const line = document.getText().split('\n')[lineNumber - 1].trim();
             const parts = line.split(' ');
             const subject = parts[1];
             const key = `${filePath}:${lineNumber}`;
+            const outputChannel = getOutputChannelForSubject(subject);
             await natsManager.startSubscription(subject, outputChannel, key);
+            outputChannel.show();
             vscode.window.showInformationMessage(`Subscribed on subject ${subject} started`);
         }),
         vscode.commands.registerCommand('nats.stopSubscription', (filePath: string, lineNumber: number) => {
@@ -41,7 +54,7 @@ export function activate(context: vscode.ExtensionContext) {
                 vscode.window.showWarningMessage('Not connected to nats server.');
                 return;
             }
-            const document = await vscode.workspace.openTextDocument(filePath);
+            const document = await vscode.workspace.openTextDocument(vscode.Uri.file(filePath));
             const line = document.getText().split('\n')[lineNumber - 1].trim();
             const parts = line.split(' ', 2);
             const subject = parts[1];
@@ -52,7 +65,8 @@ export function activate(context: vscode.ExtensionContext) {
                 data = line.substring(dataStart, dataEnd + 1);
             }
             const response = await natsManager.sendRequest(subject, data);
-            outputChannel.appendLine(`Reply to request from ${subject}: ${response.data.toString()}`);
+            globalOutputChannel.appendLine(`[${subject}] response came : ${response}`);
+            globalOutputChannel.show();
         }),
 
         vscode.commands.registerCommand('nats.publish', async (filePath: string, lineNumber: number) => {
