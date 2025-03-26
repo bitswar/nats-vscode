@@ -1,0 +1,3 @@
+SUBSCRIBE foo.bar
+REQUEST foo.bar { "data": "hello" }
+PUBLISH foo.bar { "data": "world" }
