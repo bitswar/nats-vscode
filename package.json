@@ -6,6 +6,9 @@
   "engines": {
     "vscode": "^1.96.0"
   },
+  "repository": {
+    "url": "https://github.com/bitswar/nats-vscode"
+  },
   "categories": [
     "Other"
   ],
