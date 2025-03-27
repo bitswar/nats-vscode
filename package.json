@@ -12,6 +12,7 @@
   "categories": [
     "Other"
   ],
+  "publisher": "bitswar",
   "activationEvents": [],
   "main": "./dist/extension.js",
   "contributes": {
