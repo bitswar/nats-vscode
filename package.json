@@ -13,17 +13,23 @@
     "Other"
   ],
   "publisher": "bitswar",
-  "activationEvents": [],
+  "activationEvents": [
+      "onStartupFinished"
+  ],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
       {
         "command": "nats.connect",
-        "title": "Connect to nats server"
+        "title": "Connect to NATS server"
       },
       {
         "command": "nats.disconnect",
-        "title": "Disconnect from nats server"
+        "title": "Disconnect from NATS server"
+      },
+      {
+        "command": "nats.clearSavedConnection",
+        "title": "Clear saved NATS connection"
       }
     ],
     "languages": [

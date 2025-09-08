@@ -5,6 +5,7 @@ import { NatsManager } from "./nats-client";
 const natsManager = new NatsManager();
 const globalOutputChannel = vscode.window.createOutputChannel('NATS');
 let subscriptionChannels = new Map<string, vscode.OutputChannel>();
+let extensionContext: vscode.ExtensionContext;
 
 
 function getOutputChannelForSubject(subject: string): vscode.OutputChannel {
@@ -16,16 +17,38 @@ function getOutputChannelForSubject(subject: string): vscode.OutputChannel {
     return channel;
 }
 
+async function tryAutoConnect(context: vscode.ExtensionContext) {
+    const savedUrl = context.globalState.get<string>('nats.connectionUrl');
+    if (savedUrl) {
+        try {
+            await natsManager.connect(savedUrl);
+            vscode.window.showInformationMessage(`Auto-connected to NATS: ${savedUrl}`);
+        } catch (error) {
+            vscode.window.showWarningMessage(`Failed to auto-connect to NATS: ${savedUrl}. ${error}`);
+        }
+    }
+}
+
 export function activate(context: vscode.ExtensionContext) {
+    extensionContext = context;
+    
+    tryAutoConnect(context);
+    
     context.subscriptions.push(
         vscode.commands.registerCommand('nats.connect', async () => {
-            const url = await vscode.window.showInputBox({ prompt: 'Enter NATS server url' });
+            const savedUrl = extensionContext.globalState.get<string>('nats.connectionUrl');
+            const url = await vscode.window.showInputBox({ 
+                prompt: 'Enter NATS server url',
+                value: savedUrl || '',
+                placeHolder: 'nats://localhost:4222'
+            });
             if (url) {
                 try {
                     await natsManager.connect(url);
-                    vscode.window.showInformationMessage('Connected to NATS');
+                    await extensionContext.globalState.update('nats.connectionUrl', url);
+                    vscode.window.showInformationMessage(`Connected to NATS: ${url}`);
                 } catch (error) {
-                    vscode.window.showErrorMessage(`Eror while connecting to nats: ${JSON.stringify(error)}`);
+                    vscode.window.showErrorMessage(`Error while connecting to NATS: ${JSON.stringify(error)}`);
                 }
             }
         }),
@@ -86,6 +109,14 @@ export function activate(context: vscode.ExtensionContext) {
             }
             await natsManager.publish(subject, data);
             vscode.window.showInformationMessage(`Published to ${subject}`);
+        }),
+        vscode.commands.registerCommand('nats.disconnect', async () => {
+            natsManager.disconnect();
+            vscode.window.showInformationMessage('Disconnected from NATS');
+        }),
+        vscode.commands.registerCommand('nats.clearSavedConnection', async () => {
+            await extensionContext.globalState.update('nats.connectionUrl', undefined);
+            vscode.window.showInformationMessage('Saved NATS connection URL cleared');
         })
     );
 
