@@ -121,7 +121,7 @@ export function parseNatsFile(document: vscode.TextDocument): NatsAction[] {
                 const subject = parts[1];
                 const { data, endLineIndex } = extractData(lines, i);
                 actions.push({ type: 'request', subject, data, lineNumber: i });
-                i = endLineInde;
+                i = endLineIndex;
             }
         } else if (line.startsWith('PUBLISH')) {
             const parts = line.split(' ', 2);
@@ -129,7 +129,7 @@ export function parseNatsFile(document: vscode.TextDocument): NatsAction[] {
                 const subject = parts[1];
                 const { data, endLineIndex } = extractData(lines, i);
                 actions.push({ type: 'publish', subject, data, lineNumber: i });
-                i = endLineInde;
+                i = endLineIndex;
             }
         }
     }
