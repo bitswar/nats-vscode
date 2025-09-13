@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { NatsCodeLensProvider } from './code-lens-provider';
 import { NatsManager } from "./nats-client";
+import { parseNatsFile } from './nats-file-parser';
 
 const natsManager = new NatsManager();
 const globalOutputChannel = vscode.window.createOutputChannel('NATS');
@@ -58,14 +59,17 @@ export function activate(context: vscode.ExtensionContext) {
                 return;
             }
             const document = await vscode.workspace.openTextDocument(vscode.Uri.file(filePath));
-            const line = document.getText().split('\n')[lineNumber - 1].trim();
-            const parts = line.split(' ');
-            const subject = parts[1];
+            const actions = parseNatsFile(document);
+            const action = actions.find(a => a.lineNumber === lineNumber - 1 && a.type === 'subscribe');
+            if (!action) {
+                vscode.window.showErrorMessage('Could not find SUBSCRIBE action on this line');
+                return;
+            }
             const key = `${filePath}:${lineNumber}`;
-            const outputChannel = getOutputChannelForSubject(subject);
-            await natsManager.startSubscription(subject, outputChannel, key);
+            const outputChannel = getOutputChannelForSubject(action.subject);
+            await natsManager.startSubscription(action.subject, outputChannel, key);
             outputChannel.show();
-            vscode.window.showInformationMessage(`Subscribed on subject ${subject} started`);
+            vscode.window.showInformationMessage(`Subscribed on subject ${action.subject} started`);
         }),
         vscode.commands.registerCommand('nats.stopSubscription', (filePath: string, lineNumber: number) => {
             const key = `${filePath}:${lineNumber}`;
@@ -78,17 +82,14 @@ export function activate(context: vscode.ExtensionContext) {
                 return;
             }
             const document = await vscode.workspace.openTextDocument(vscode.Uri.file(filePath));
-            const line = document.getText().split('\n')[lineNumber - 1].trim();
-            const parts = line.split(' ', 2);
-            const subject = parts[1];
-            const dataStart = line.indexOf('{');
-            const dataEnd = line.lastIndexOf('}');
-            let data = '';
-            if (dataStart !== -1 && dataEnd !== -1 && dataEnd > dataStart) {
-                data = line.substring(dataStart, dataEnd + 1);
+            const actions = parseNatsFile(document);
+            const action = actions.find(a => a.lineNumber === lineNumber - 1 && a.type === 'request');
+            if (!action) {
+                vscode.window.showErrorMessage('Could not find REQUEST action on this line');
+                return;
             }
-            const response = await natsManager.sendRequest(subject, data);
-            globalOutputChannel.appendLine(`[${subject}] response came : ${response}`);
+            const response = await natsManager.sendRequest(action.subject, action.data || '');
+            globalOutputChannel.appendLine(`[${action.subject}] response came : ${response}`);
             globalOutputChannel.show();
         }),
 
@@ -97,18 +98,15 @@ export function activate(context: vscode.ExtensionContext) {
                 vscode.window.showWarningMessage('Not connected to nats server.');
                 return;
             }
-            const document = await vscode.workspace.openTextDocument(filePath);
-            const line = document.getText().split('\n')[lineNumber - 1].trim();
-            const parts = line.split(' ', 2);
-            const subject = parts[1];
-            const dataStart = line.indexOf('{');
-            const dataEnd = line.lastIndexOf('}');
-            let data = '';
-            if (dataStart !== -1 && dataEnd !== -1 && dataEnd > dataStart) {
-                data = line.substring(dataStart, dataEnd + 1);
+            const document = await vscode.workspace.openTextDocument(vscode.Uri.file(filePath));
+            const actions = parseNatsFile(document);
+            const action = actions.find(a => a.lineNumber === lineNumber - 1 && a.type === 'publish');
+            if (!action) {
+                vscode.window.showErrorMessage('Could not find PUBLISH action on this line');
+                return;
             }
-            await natsManager.publish(subject, data);
-            vscode.window.showInformationMessage(`Published to ${subject}`);
+            await natsManager.publish(action.subject, action.data || '');
+            vscode.window.showInformationMessage(`Published to ${action.subject}`);
         }),
         vscode.commands.registerCommand('nats.disconnect', async () => {
             natsManager.disconnect();

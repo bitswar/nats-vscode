@@ -50,7 +50,7 @@ export class NatsManager {
 
     async sendRequest(subject: string, data: string): Promise<string> {
         if (!this.nc) {throw new Error('Not connected');}
-        return this.nc.request(subject, data).then((resp) => {
+        return this.nc.request(subject, data, {timeout: 15000}).then((resp) => {
             const respString = JSON.stringify(resp.json());
             return respString;
         });
